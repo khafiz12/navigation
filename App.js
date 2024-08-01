@@ -4,12 +4,13 @@ import StartScreen from './components/Start';
 import ChatScreen from './components/Chat';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-const Stack = createNativeStackNavigator();
 import { initializeApp } from 'firebase/app';
 import { getFirestore, disableNetwork, enableNetwork } from 'firebase/firestore';
 import { useNetInfo } from '@react-native-community/netinfo';
 import {useEffect} from 'react';
 import { getStorage } from 'firebase/storage';
+
+const Stack = createNativeStackNavigator();
 
 const App = () => {
 

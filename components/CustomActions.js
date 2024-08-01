@@ -38,15 +38,18 @@ const CustomActions = ({storage, onSend, wrapperStyle, iconTextStyle, userID }) 
       }
     
       const uploadAndSendImage = async (imageURI) => {
-        const uniqueRefString = generateReference(imageURI);
-        const newUploadRef = ref(storage, uniqueRefString);
-        const response = await fetch(imageURI);
-        const blob = await response.blob();
-        uploadBytes(newUploadRef, blob).then(async (snapshot) => {
-          const imageURL = await getDownloadURL(snapshot.ref)
-          onSend({ image: imageURL })
-        });
-      }
+        try {
+            const uniqueRefString = generateReference(imageURI);
+            const newUploadRef = ref(storage, uniqueRefString);
+            const response = await fetch(imageURI);
+            const blob = await response.blob();
+            await uploadBytes(newUploadRef, blob);
+            const imageURL = await getDownloadURL(newUploadRef);
+            onSend([{ image: imageURL, _id: uniqueRefString, createdAt: new Date(), user: { _id: userID }}]);
+        } catch (error) {
+            console.error("Error uploading image:", error);
+        }
+    };
     
       const pickImage = async () => {
         let permissions = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -67,21 +70,30 @@ const CustomActions = ({storage, onSend, wrapperStyle, iconTextStyle, userID }) 
       }
     
       const getLocation = async () => {
-        let permissions = await Location.requestForegroundPermissionsAsync();
-        if (permissions?.granted) {
-          const location = await Location.getCurrentPositionAsync({});
-          if (location) {
-            onSend({
-                location: {
-                  longitude: location.coords.longitude,
-                  latitude: location.coords.latitude,
-                },
-              });
-            console.log('sending the location occurs here');
-          } else Alert.alert("Error occurred while fetching location");
-        } else Alert.alert("Permissions haven't been granted.");
-      }
-
+        try {
+            let permissions = await Location.requestForegroundPermissionsAsync();
+            if (permissions?.granted) {
+                const location = await Location.getCurrentPositionAsync({});
+                if (location) {
+                    onSend([{
+                        location: {
+                            longitude: location.coords.longitude,
+                            latitude: location.coords.latitude,
+                        },
+                        _id: new Date().toISOString(),
+                        createdAt: new Date(),
+                        user: { _id: userID }
+                    }]);
+                } else {
+                    Alert.alert("Error", "Failed to fetch location.");
+                }
+            } else {
+                Alert.alert("Permissions haven't been granted.");
+            }
+        } catch (error) {
+            console.error("Error fetching location:", error);
+        }
+    };
 
   return (
     <TouchableOpacity style={styles.container} 
